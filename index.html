@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173b67">
+  <meta name="description" content="课程时间、周次、教师和教室一目了然。">
+  <title>我的课表</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23173b67'/%3E%3Cpath d='M14 21h36M14 34h36M14 47h23' stroke='%23bce9e0' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='47' cy='47' r='6' fill='%23f2c46d'/%3E%3C/svg%3E">
+  <style>
+    :root { color-scheme: light; font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", system-ui, sans-serif; font-size: 16px; background: #eef3f7; color: #183149; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 280px; }
+    button, select { font: inherit; }
+    .shell { max-width: 1540px; margin: 0 auto; padding: 28px 22px 42px; }
+    .masthead { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 23px; }
+    .eyebrow { margin: 0 0 5px; color: #507088; font-size: .875rem; font-weight: 600; letter-spacing: .04em; }
+    h1 { margin: 0; font-size: clamp(1.75rem, 3vw, 2.3rem); line-height: 1.2; letter-spacing: -.03em; color: #12375e; }
+    .subtitle { margin: 8px 0 0; color: #5b6d7c; font-size: .9rem; }
+    .controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .week-label { color: #36526b; font-size: .9rem; font-weight: 700; white-space: nowrap; }
+    select { min-height: 43px; padding: 0 37px 0 14px; border: 1px solid #a9bdcc; border-radius: 10px; background: #fff; color: #143552; font-weight: 700; cursor: pointer; }
+    select:focus-visible, button:focus-visible { outline: 3px solid #f1b544; outline-offset: 2px; }
+    .board { border: 1px solid #d6e2e9; border-radius: 18px; background: #fff; box-shadow: 0 14px 35px rgba(20, 56, 88, .08); overflow: hidden; }
+    .day-tabs { display: none; }
+    .week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+    .day { min-width: 0; padding: 16px 10px 19px; border-right: 1px solid #e4edf1; }
+    .day:last-child { border-right: 0; }
+    .day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 5px; min-height: 40px; padding: 0 4px; border-bottom: 2px solid #d9e5eb; }
+    .day-name { margin: 0; color: #163c62; font-size: 1rem; font-weight: 800; }
+    .day-count { color: #6d8190; font-size: .75rem; white-space: nowrap; }
+    .courses { display: grid; gap: 11px; padding-top: 13px; }
+    .course { position: relative; padding: 13px 11px 12px; border: 1px solid #d7e8ed; border-left: 4px solid var(--accent, #28769f); border-radius: 10px; background: var(--tint, #f5fbfd); overflow-wrap: anywhere; }
+    .time { margin: 0 0 10px; color: #245875; font-size: .76rem; font-weight: 800; line-height: 1.4; }
+    .course h3 { margin: 0; font-size: .91rem; line-height: 1.45; color: #123451; }
+    .section { margin: 4px 0 0; font-size: .75rem; color: #56717f; line-height: 1.35; }
+    .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin: 10px 0 0; font-size: .76rem; line-height: 1.35; color: #405d6f; }
+    .room { display: inline-block; padding: 2px 7px; border-radius: 6px; background: #e1eff2; color: #145570; font-weight: 800; white-space: nowrap; }
+    .teacher { margin: 6px 0 0; color: #5d7180; font-size: .76rem; line-height: 1.4; }
+    .empty { margin: 0; padding: 13px 5px; color: #8798a6; font-size: .84rem; }
+    .note { margin: 14px 2px 0; color: #627785; font-size: .82rem; line-height: 1.5; }
+    @media (max-width: 1280px) and (min-width: 761px) {
+      .week-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .day:nth-child(4) { border-right: 0; }
+      .day:nth-child(n+5) { border-top: 1px solid #e4edf1; }
+    }
+    @media (max-width: 760px) {
+      .shell { padding: 18px 12px 28px; }
+      .masthead { align-items: start; flex-direction: column; gap: 16px; margin-bottom: 16px; }
+      .controls { width: 100%; justify-content: space-between; }
+      .board { border-radius: 14px; }
+      .day-tabs { display: flex; gap: 7px; overflow-x: auto; padding: 11px 10px; border-bottom: 1px solid #dce8ee; scrollbar-width: thin; }
+      .day-tabs button { min-width: 54px; min-height: 40px; padding: 7px 10px; border: 1px solid #d1e0e8; border-radius: 9px; background: #f8fbfc; color: #3b6078; font-size: .86rem; font-weight: 700; white-space: nowrap; cursor: pointer; }
+      .day-tabs button[aria-selected="true"] { border-color: #173b67; background: #173b67; color: #fff; }
+      .week-grid { display: block; }
+      .day { display: none; border: 0; padding: 15px 14px 20px; }
+      .day[data-active="true"] { display: block; }
+      .day-head { min-height: 37px; }
+      .courses { gap: 10px; }
+      .course { padding: 14px; }
+      .course h3 { font-size: 1rem; }
+      .time, .section, .meta, .teacher { font-size: .86rem; }
+    }
+    @media (prefers-reduced-motion: no-preference) { button, select { transition: background-color .15s, border-color .15s; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">华文校区及番禺校区节次方案</p>
+        <h1>我的课表</h1>
+        <p class="subtitle" id="date-summary">按周次查看课程、时间与教室</p>
+      </div>
+      <div class="controls">
+        <label class="week-label" for="week">上课周次</label>
+        <select id="week" aria-label="选择上课周次"><option value="all">全部周次</option></select>
+      </div>
+    </header>
+    <section class="board" aria-label="每周课程表">
+      <nav class="day-tabs" id="day-tabs" aria-label="选择星期"></nav>
+      <div class="week-grid" id="week-grid"></div>
+    </section>
+    <p class="note">2026 年 9 月 28 日是第 4 周的星期一。课程按所提供的这套课表截图整理。</p>
+  </main>
+  <script>
+    const days = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"];
+    const firstMonday = Date.UTC(2026, 8, 7); // 第 1 周星期一；9 月 28 日为第 4 周星期一。
+    const oneDay = 24 * 60 * 60 * 1000;
+    const dateAt = (week, day) => new Date(firstMonday + ((week - 1) * 7 + day) * oneDay);
+    const dateLabel = date => `${date.getUTCMonth() + 1}月${date.getUTCDate()}日`;
+    const times = [
+      ["08:30", "09:15"], ["09:25", "10:10"], ["10:30", "11:15"],
+      ["11:25", "12:10"], ["13:05", "13:50"], ["14:00", "14:45"],
+      ["14:55", "15:40"], ["15:50", "16:35"], ["16:45", "17:30"],
+      ["18:30", "19:15"], ["19:25", "20:10"], ["20:20", "21:05"], ["21:15", "22:00"]
+    ];
+    // 课程资料来自用户提供的三张截图；保留原课表中的课程班号。
+    const classes = [
+      {day:0, start:1, end:2, weeks:[1,18], name:"计算机控制技术", code:"计算机控制技术01", teacher:"闫飞炎", room:"N404"},
+      {day:0, start:3, end:4, weeks:[1,18], name:"论文写作与学术规范", code:"论文写作与学术规范214", teacher:"胡润文", room:"N424"},
+      {day:0, start:6, end:7, weeks:[2,10], name:"自然辩证法概论", code:"自然辩证法概论04", teacher:"于小涵", room:"N414"},
+      {day:0, start:8, end:9, weeks:[1,18], name:"嵌入式系统开发", code:"嵌入式系统开发01", teacher:"王高", room:"N524"},
+      {day:1, start:1, end:2, weeks:[2,18], name:"学术英语", code:"学术英语275", teacher:"聂冰", room:"N410"},
+      {day:2, start:6, end:8, weeks:[1,18], name:"现代半导体器件物理", code:"现代半导体器件物理01", teacher:"罗志", room:"N127"},
+      {day:2, start:10, end:12, weeks:[1,18], name:"随机过程", code:"随机过程02", teacher:"赵山程、沈宗源", room:"N207"},
+      {day:3, start:6, end:8, weeks:[3,15], name:"高等数值分析", code:"高等数值分析02", teacher:"张庆丰", room:"N304"},
+      {day:4, start:3, end:4, weeks:[1,18], name:"半导体光电子学", code:"半导体光电子学01", teacher:"罗志", room:"N224"},
+      {day:4, start:6, end:9, weeks:[3,11], name:"集成电路设计方法与EDA", code:"集成电路设计方法与EDA01", teacher:"骆爱文", room:"N225"},
+      {day:4, start:10, end:11, weeks:[2,18], name:"新时代中国特色社会主义理论与实践", code:"新时代中国特色社会主义理论与实践2035", teacher:"谢长安", room:"N414"}
+    ];
+    const accents = [
+      ["#237ea2", "#f2fafc"], ["#8268a7", "#f8f5fc"], ["#bf7b2d", "#fff9f0"],
+      ["#3c8b78", "#f1faf6"], ["#b2576b", "#fff5f7"], ["#5478a8", "#f4f8fd"],
+      ["#7b8b9b", "#f7fafc"]
+    ];
+    const weekSelect = document.getElementById("week");
+    const tabs = document.getElementById("day-tabs");
+    const grid = document.getElementById("week-grid");
+    let selectedDay = 0;
+    for (let n = 1; n <= 18; n++) weekSelect.add(new Option(`第 ${n} 周（${dateLabel(dateAt(n, 0))}—${dateLabel(dateAt(n, 6))}）`, String(n)));
+    const chinaDate = new Intl.DateTimeFormat("en-US", {timeZone:"Asia/Shanghai",year:"numeric",month:"numeric",day:"numeric"}).formatToParts(new Date());
+    const part = name => Number(chinaDate.find(item => item.type === name).value);
+    const todayUTC = Date.UTC(part("year"), part("month") - 1, part("day"));
+    const currentWeek = Math.floor((todayUTC - firstMonday) / (7 * oneDay)) + 1;
+    // 星期日优先显示即将开始的一周，便于查看明天的安排。
+    const displayWeek = currentWeek + (new Date(todayUTC).getUTCDay() === 0 ? 1 : 0);
+    if (displayWeek >= 1 && displayWeek <= 18) weekSelect.value = String(displayWeek);
+    function el(tag, className, content) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (content != null) node.textContent = content;
+      return node;
+    }
+    function render() {
+      const week = weekSelect.value === "all" ? null : Number(weekSelect.value);
+      document.getElementById("date-summary").textContent = week === null
+        ? "全部周次 · 按星期查看课程、时间与教室"
+        : `第 ${week} 周 · ${dateLabel(dateAt(week, 0))}—${dateLabel(dateAt(week, 6))}`;
+      tabs.replaceChildren();
+      grid.replaceChildren();
+      days.forEach((dayName, dayIndex) => {
+        const dayClasses = classes.filter(c => c.day === dayIndex && (week === null || (week >= c.weeks[0] && week <= c.weeks[1])));
+        const tab = el("button", "", week === null ? dayName.replace("星期", "周") : `${dayName.replace("星期", "周")} ${dateAt(week, dayIndex).getUTCMonth() + 1}/${dateAt(week, dayIndex).getUTCDate()}`);
+        tab.type = "button";
+        tab.setAttribute("aria-selected", String(selectedDay === dayIndex));
+        tab.addEventListener("click", () => { selectedDay = dayIndex; render(); });
+        tabs.append(tab);
+        const day = el("section", "day");
+        day.dataset.active = String(selectedDay === dayIndex);
+        day.setAttribute("aria-label", dayName);
+        const head = el("div", "day-head");
+        head.append(el("h2", "day-name", week === null ? dayName : `${dayName} · ${dateLabel(dateAt(week, dayIndex))}`), el("span", "day-count", `${dayClasses.length} 门`));
+        day.append(head);
+        const list = el("div", "courses");
+        if (!dayClasses.length) list.append(el("p", "empty", "无课"));
+        dayClasses.forEach(c => {
+          const card = el("article", "course");
+          card.style.setProperty("--accent", accents[dayIndex][0]);
+          card.style.setProperty("--tint", accents[dayIndex][1]);
+          card.append(
+            el("p", "time", `第 ${c.start}–${c.end} 节 · ${times[c.start - 1][0]}–${times[c.end - 1][1]}`),
+            el("h3", "", c.name),
+            el("p", "section", c.code)
+          );
+          const meta = el("p", "meta");
+          meta.append(el("span", "room", c.room), el("span", "", `第 ${c.weeks[0]}–${c.weeks[1]} 周`));
+          card.append(meta, el("p", "teacher", `教师：${c.teacher}`));
+          list.append(card);
+        });
+        day.append(list);
+        grid.append(day);
+      });
+    }
+    weekSelect.addEventListener("change", render);
+    render();
+    try {
+      document.modelContext?.registerTool?.({
+        name: "set_schedule_view",
+        title: "查看课表",
+        description: "选择课表周次和星期，并更新页面显示。week 可设为 1 到 18 或 all，day 为星期一到星期日的序号 1 到 7。",
+        inputSchema: {type:"object", properties:{week:{anyOf:[{type:"integer",minimum:1,maximum:18},{type:"string",enum:["all"]}]},day:{type:"integer",minimum:1,maximum:7}}, required:["week","day"],additionalProperties:false},
+        annotations: {readOnlyHint:false},
+        execute(input) {
+          if (!input || !(input.week === "all" || (Number.isInteger(input.week) && input.week >= 1 && input.week <= 18)) || !Number.isInteger(input.day) || input.day < 1 || input.day > 7) throw new Error("周次或星期无效");
+          weekSelect.value = String(input.week);
+          selectedDay = input.day - 1;
+          render();
+          return {week:weekSelect.value, day:days[selectedDay], courses:classes.filter(c => c.day === selectedDay && (input.week === "all" || (input.week >= c.weeks[0] && input.week <= c.weeks[1]))).length};
+        }
+      });
+    } catch (_) { /* 不支持 WebMCP 的浏览器仍可正常查看课表。 */ }
+  </script>
+</body>
+</html>
